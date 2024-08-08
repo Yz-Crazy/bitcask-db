@@ -2,7 +2,9 @@ package index
 
 import (
 	"bitcask-db/data"
+	"bytes"
 	"github.com/google/btree"
+	"sort"
 	"sync"
 )
 
@@ -49,4 +51,80 @@ func (bt *BTree) Delete(key []byte) bool {
 		return false
 	}
 	return true
+}
+
+func (bt *BTree) Iterator(reverse bool) Iterator {
+	bt.lock.RLock()
+	defer bt.lock.RUnlock()
+	if bt.tree == nil {
+		return nil
+	}
+	return newBtreeIterator(bt.tree, reverse)
+}
+
+// Btree 索引迭代器
+type bterrIterator struct {
+	currIndex int     // 当前遍历下标位置
+	reverse   bool    // 是否是反向遍历
+	values    []*Item // key + 位置索引信息
+}
+
+// newBtreeIterator 实例化 bterrIterator
+func newBtreeIterator(tree *btree.BTree, reverse bool) *bterrIterator {
+	var idx int
+	values := make([]*Item, tree.Len())
+
+	// 将所有的数据存放到数组中
+	saveValues := func(item btree.Item) bool {
+		values[idx] = item.(*Item)
+		idx++
+		return true
+	}
+
+	// 排序
+	if reverse {
+		tree.Descend(saveValues)
+	} else {
+		tree.Ascend(saveValues)
+	}
+	return &bterrIterator{
+		currIndex: 0,
+		reverse:   reverse,
+		values:    values,
+	}
+}
+
+func (bit *bterrIterator) Rewind() {
+	bit.currIndex = 0
+}
+
+func (bit *bterrIterator) Seek(key []byte) {
+	if bit.reverse {
+		bit.currIndex = sort.Search(len(bit.values), func(i int) bool {
+			return bytes.Compare(bit.values[i].key, key) <= 0
+		})
+	} else {
+		bit.currIndex = sort.Search(len(bit.values), func(i int) bool {
+			return bytes.Compare(bit.values[i].key, key) >= 0
+		})
+	}
+
+}
+
+func (bit *bterrIterator) Next() {
+	bit.currIndex += 1
+}
+func (bit *bterrIterator) Valid() bool {
+
+	return bit.currIndex < len(bit.values)
+}
+func (bit *bterrIterator) Key() []byte {
+
+	return bit.values[bit.currIndex].key
+}
+func (bit *bterrIterator) Value() *data.LogRecordPos {
+	return bit.values[bit.currIndex].pos
+}
+func (bit *bterrIterator) Close() {
+	bit.values = nil
 }

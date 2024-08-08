@@ -30,3 +30,16 @@ var DefaultOptions = Options{
 	SyncWrite:    true,
 	IndexType:    BTree,
 }
+
+// IteratorOptions 索引迭代器配置项
+type IteratorOptions struct {
+	// 边你前缀为指定值的key，默认为空
+	Prefix []byte
+	// 是否反向遍历，默认 false 是正向
+	Reverse bool
+}
+
+var DefaultIteratorOptions = IteratorOptions{
+	Prefix:  nil,
+	Reverse: false,
+}
