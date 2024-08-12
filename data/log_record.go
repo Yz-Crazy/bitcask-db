@@ -2,7 +2,6 @@ package data
 
 import (
 	"encoding/binary"
-	"fmt"
 	"hash/crc32"
 )
 
@@ -72,7 +71,7 @@ func EncodeLogRecord(logRecord *LogRecord) ([]byte, int64) {
 	// 对整个 LogRecord 的数据进行 CRC 校验
 	crc := crc32.ChecksumIEEE(encBytes[4:])
 	binary.LittleEndian.PutUint32(encBytes[:4], crc)
-	fmt.Printf("header length: %d,crc:%d,key size:%d, value size:%d\n", len(header[:index]), crc, len(logRecord.Key), len(logRecord.Value))
+	//fmt.Printf("header length: %d,crc:%d,key size:%d, value size:%d\n", len(header[:index]), crc, len(logRecord.Key), len(logRecord.Value))
 	return encBytes, int64(size)
 }
 
