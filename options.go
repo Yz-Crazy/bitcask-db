@@ -43,3 +43,11 @@ var DefaultIteratorOptions = IteratorOptions{
 	Prefix:  nil,
 	Reverse: false,
 }
+
+// WriteBatchOptions 批量读写配置
+type WriteBatchOptions struct {
+	// 一个批次当中最大的数据量
+	MaxBatchNum uint
+	// 提交事务时是否 Sync 持久化
+	SyncWrites bool
+}
