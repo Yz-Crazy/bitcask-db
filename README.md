@@ -1,1 +1,1 @@
-自学项目
+ 根据 RoseDB 项目，学习基于 bitcask 实现的KV数据库 
