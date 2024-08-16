@@ -27,7 +27,7 @@ const (
 var DefaultOptions = Options{
 	DirPath:      os.TempDir(),
 	DataFileSize: 256 * 1024 * 1024, //256M
-	SyncWrite:    true,
+	SyncWrite:    false,
 	IndexType:    BTree,
 }
 
@@ -50,4 +50,9 @@ type WriteBatchOptions struct {
 	MaxBatchNum uint
 	// 提交事务时是否 Sync 持久化
 	SyncWrites bool
+}
+
+var DefaultWriteBatchOptions = WriteBatchOptions{
+	MaxBatchNum: 10000,
+	SyncWrites:  true,
 }

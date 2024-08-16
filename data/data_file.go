@@ -89,10 +89,6 @@ func (df *DataFile) ReadLogRecord(offset int64) (*LogRecord, int64, error) {
 	return logRecord, recordSize, nil
 }
 
-func (df *DataFile) DeleteLogRecord() {
-
-}
-
 func (df *DataFile) Write(buf []byte) error {
 	nBytes, err := df.IoManager.Write(buf)
 	if err != nil {
@@ -113,7 +109,7 @@ func (df *DataFile) Close() error {
 
 }
 
-func (df DataFile) readNBytes(n int64, offset int64) ([]byte, error) {
+func (df *DataFile) readNBytes(n int64, offset int64) ([]byte, error) {
 	b := make([]byte, n)
 	_, err := df.IoManager.Read(b, offset)
 	if err != nil {

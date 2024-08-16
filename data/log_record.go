@@ -17,6 +17,7 @@ type LogRecordType = byte
 const (
 	LogRecordNormal LogRecordType = iota
 	LogRecordDeleted
+	LogRecordTxnFindShed
 )
 
 // crc type keySize valueSize
@@ -47,9 +48,7 @@ type LogRecordHeader struct {
 // value 变长
 
 func EncodeLogRecord(logRecord *LogRecord) ([]byte, int64) {
-	if logRecord == nil {
-		return nil, -1
-	}
+	// 初始化 header 部分的字节数组
 	header := make([]byte, maxLogRecordHeaderSize)
 
 	// 从第5个字节开始写，
@@ -91,6 +90,7 @@ func decodeLogRecordHeader(buf []byte) (*LogRecordHeader, int64) {
 	header.keySize = uint32(keySize)
 	index += n
 
+	// 取出实际的 value size
 	valueSize, n := binary.Varint(buf[index:])
 	header.valueSize = uint32(valueSize)
 	index += n // 实际的header长度
@@ -107,4 +107,10 @@ func getLogRecordCRC(lr *LogRecord, header []byte) uint32 {
 	crc = crc32.Update(crc, crc32.IEEETable, lr.Value)
 
 	return crc
+}
+
+// TransactionRecord 暂存事务相关的数据
+type TransactionRecord struct {
+	Record *LogRecord
+	Pos    *LogRecordPos
 }
