@@ -9,7 +9,11 @@ import (
 	"path/filepath"
 )
 
-const DataFileNameSuffix = ".data"
+const (
+	DataFileNameSuffix    = ".data"
+	HintFileName          = "hint-index"
+	MergeFinishedFileName = "merge-finished"
+)
 
 var ErrInvalidCRC = errors.New("invalid crc value,log record maybe corrupted")
 
@@ -21,14 +25,8 @@ type DataFile struct {
 }
 
 func OpenDataFile(dirPath string, fileId uint32) (*DataFile, error) {
-	fileName := filepath.Join(dirPath, fmt.Sprintf("%09d", fileId)+DataFileNameSuffix)
-	// 初始化
-	ioManager, err := fio.NewIOManager(fileName)
-	if err != nil {
-		return nil, err
-	}
-
-	return &DataFile{FileId: fileId, WriteOffset: 0, IoManager: ioManager}, nil
+	fileName := GetDataFileName(dirPath, fileId)
+	return newDataFile(fileName, fileId)
 }
 
 // ReadLogRecord 根据 offset 从文件中读取 LogRecord
@@ -107,6 +105,44 @@ func (df *DataFile) Sync() error {
 func (df *DataFile) Close() error {
 	return df.IoManager.Close()
 
+}
+
+func OpenHintFile(dirPath string) (*DataFile, error) {
+	fileName := filepath.Join(dirPath, HintFileName)
+	return newDataFile(fileName, 0)
+}
+
+// OpenMergeFinishedFile 打开标识 merge 完成的文件
+func OpenMergeFinishedFile(dirPath string) (*DataFile, error) {
+	fileName := filepath.Join(dirPath, MergeFinishedFileName)
+	return newDataFile(fileName, 0)
+}
+
+// WriteHintRecord 写入索引信息到 hint 文件
+func (df *DataFile) WriteHintRecord(key []byte, pos *LogRecordPos) error {
+	record := &LogRecord{
+		Key:   key,
+		Value: EncodeLogRecordPos(pos),
+	}
+	encRecord, _ := EncodeLogRecord(record)
+	return df.Write(encRecord)
+}
+
+func GetDataFileName(dirPath string, fileId uint32) string {
+	return filepath.Join(dirPath, fmt.Sprintf("%09d", fileId)+DataFileNameSuffix)
+}
+
+func newDataFile(fileName string, fileId uint32) (*DataFile, error) {
+	// 初始化 IOManager 管理器接口
+	ioManager, err := fio.NewIOManager(fileName)
+	if err != nil {
+		return nil, err
+	}
+	return &DataFile{
+		FileId:      fileId,
+		WriteOffset: 0,
+		IoManager:   ioManager,
+	}, nil
 }
 
 func (df *DataFile) readNBytes(n int64, offset int64) ([]byte, error) {
