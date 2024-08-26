@@ -68,14 +68,14 @@ func (bt *BTree) Iterator(reverse bool) Iterator {
 }
 
 // Btree 索引迭代器
-type bterrIterator struct {
+type btreeIterator struct {
 	currIndex int     // 当前遍历下标位置
 	reverse   bool    // 是否是反向遍历
 	values    []*Item // key + 位置索引信息
 }
 
 // newBtreeIterator 实例化 bterrIterator
-func newBtreeIterator(tree *btree.BTree, reverse bool) *bterrIterator {
+func newBtreeIterator(tree *btree.BTree, reverse bool) *btreeIterator {
 	var idx int
 	values := make([]*Item, tree.Len())
 
@@ -92,18 +92,18 @@ func newBtreeIterator(tree *btree.BTree, reverse bool) *bterrIterator {
 	} else {
 		tree.Ascend(saveValues)
 	}
-	return &bterrIterator{
+	return &btreeIterator{
 		currIndex: 0,
 		reverse:   reverse,
 		values:    values,
 	}
 }
 
-func (bit *bterrIterator) Rewind() {
+func (bit *btreeIterator) Rewind() {
 	bit.currIndex = 0
 }
 
-func (bit *bterrIterator) Seek(key []byte) {
+func (bit *btreeIterator) Seek(key []byte) {
 	if bit.reverse {
 		bit.currIndex = sort.Search(len(bit.values), func(i int) bool {
 			return bytes.Compare(bit.values[i].key, key) <= 0
@@ -116,20 +116,20 @@ func (bit *bterrIterator) Seek(key []byte) {
 
 }
 
-func (bit *bterrIterator) Next() {
+func (bit *btreeIterator) Next() {
 	bit.currIndex += 1
 }
-func (bit *bterrIterator) Valid() bool {
+func (bit *btreeIterator) Valid() bool {
 
 	return bit.currIndex < len(bit.values)
 }
-func (bit *bterrIterator) Key() []byte {
+func (bit *btreeIterator) Key() []byte {
 
 	return bit.values[bit.currIndex].key
 }
-func (bit *bterrIterator) Value() *data.LogRecordPos {
+func (bit *btreeIterator) Value() *data.LogRecordPos {
 	return bit.values[bit.currIndex].pos
 }
-func (bit *bterrIterator) Close() {
+func (bit *btreeIterator) Close() {
 	bit.values = nil
 }
