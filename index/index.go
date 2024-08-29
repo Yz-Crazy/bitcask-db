@@ -31,17 +31,20 @@ const (
 	Btree IndexType = iota + 1
 	// ART 自适应基数树索引
 	ART
+	// BPTree B+ 树索引
+	BPTree
 )
 
 // NewIndex
 
-func NewIndexer(typ IndexType) Index {
+func NewIndexer(typ IndexType, dirPath string) Index {
 	switch typ {
 	case Btree:
 		return NewBTree()
 	case ART:
-		// TODO:
-		return nil
+		return NewART()
+	case BPTree:
+		return NewBPlusTree(dirPath)
 	default:
 		panic("unsupported index type")
 	}

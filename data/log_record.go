@@ -102,7 +102,7 @@ func EncodeLogRecordPos(pos *LogRecordPos) []byte {
 	buf := make([]byte, binary.MaxVarintLen32+binary.MaxVarintLen64)
 	var index = 0
 	index += binary.PutVarint(buf[index:], int64(pos.Fid))
-	index += binary.PutVarint(buf[index:], int64(pos.Offset))
+	index += binary.PutVarint(buf[index:], pos.Offset)
 	return buf[:index]
 }
 
