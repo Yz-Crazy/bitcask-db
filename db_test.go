@@ -155,7 +155,7 @@ func TestDB_Get(t *testing.T) {
 	assert.NotNil(t, val7)
 	assert.Equal(t, val3, val7)
 
-	val8, err := db.Get(utils.GetTestKey(33))
+	val8, err := db2.Get(utils.GetTestKey(33))
 	assert.Equal(t, 0, len(val8))
 	assert.Equal(t, ErrKeyNotFound, err)
 }

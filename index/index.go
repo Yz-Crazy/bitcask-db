@@ -22,6 +22,9 @@ type Index interface {
 
 	// Iterator 索引迭代器
 	Iterator(reverse bool) Iterator
+
+	// Close 关闭迭代器
+	Close() error
 }
 
 type IndexType = int8
@@ -37,14 +40,14 @@ const (
 
 // NewIndex
 
-func NewIndexer(typ IndexType, dirPath string) Index {
+func NewIndexer(typ IndexType, dirPath string, sync bool) Index {
 	switch typ {
 	case Btree:
 		return NewBTree()
 	case ART:
 		return NewART()
 	case BPTree:
-		return NewBPlusTree(dirPath)
+		return NewBPlusTree(dirPath, sync)
 	default:
 		panic("unsupported index type")
 	}

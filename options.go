@@ -9,7 +9,7 @@ type Options struct {
 	DataFileSize int64
 
 	// 每次写入完毕执行持久化
-	SyncWrite bool
+	SyncWrites bool
 
 	// 索引类型
 	IndexType IndexerType
@@ -30,8 +30,8 @@ const (
 var DefaultOptions = Options{
 	DirPath:      os.TempDir(),
 	DataFileSize: 256 * 1024 * 1024, //256M
-	SyncWrite:    false,
-	IndexType:    BTree,
+	SyncWrites:   false,
+	IndexType:    BPlusTree,
 }
 
 // IteratorOptions 索引迭代器配置项

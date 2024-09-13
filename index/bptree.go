@@ -21,8 +21,10 @@ type BPlusTree struct {
 }
 
 // NewBPlusTree 初始化 B+ 树索引
-func NewBPlusTree(dirPath string) *BPlusTree {
-	bptree, err := bbolt.Open(filepath.Join(dirPath, bptreeIndexFileName), 0644, nil)
+func NewBPlusTree(dirPath string, syncWrites bool) *BPlusTree {
+	opts := bbolt.DefaultOptions
+	opts.NoSync = !syncWrites
+	bptree, err := bbolt.Open(filepath.Join(dirPath, bptreeIndexFileName), 0644, opts)
 	if err != nil {
 		panic("failed to open bptree at startup")
 	}
@@ -98,5 +100,81 @@ func (bpt *BPlusTree) Size() int {
 
 // Iterator 索引迭代器
 func (bpt *BPlusTree) Iterator(reverse bool) Iterator {
-	return nil
+	if bpt.tree == nil {
+		return nil
+	}
+	return newBptreeIterator(bpt.tree, reverse)
+}
+
+func (bpt *BPlusTree) Close() error {
+	return bpt.tree.Close()
+}
+
+// b+树迭代器
+type bptreeIterator struct {
+	tx        *bbolt.Tx
+	cursor    *bbolt.Cursor
+	reverse   bool
+	currKey   []byte
+	currValue []byte
+}
+
+func newBptreeIterator(tree *bbolt.DB, reverse bool) *bptreeIterator {
+	tx, err := tree.Begin(false)
+	if err != nil {
+		panic("failed to begin a transaction")
+	}
+	bpi := &bptreeIterator{
+		tx:      tx,
+		cursor:  tx.Bucket(indexBucketName).Cursor(),
+		reverse: reverse,
+	}
+	bpi.Rewind()
+	return bpi
+
+}
+
+// Rewind 重新回到迭代器的起点，即第一个数据
+func (bpi *bptreeIterator) Rewind() {
+	if bpi.reverse {
+		bpi.currKey, bpi.currValue = bpi.cursor.Last()
+	} else {
+		bpi.currKey, bpi.currValue = bpi.cursor.First()
+	}
+
+}
+
+// Seek 根据传入的 key 查找到第一个大于（或小于）等于的目标 key，根据从这个 key 开始遍历
+func (bpi *bptreeIterator) Seek(key []byte) {
+	bpi.currKey, bpi.currValue = bpi.cursor.Seek(key)
+}
+
+// Next 跳转到下一个 key
+func (bpi *bptreeIterator) Next() {
+	if bpi.reverse {
+		bpi.currKey, bpi.currValue = bpi.cursor.Prev()
+	} else {
+		bpi.currKey, bpi.currValue = bpi.cursor.Next()
+	}
+
+}
+
+// Valid 是否有效，既是否已经遍历完了所有的 key，用于退出遍历
+func (bpi *bptreeIterator) Valid() bool {
+	return len(bpi.currKey) != 0
+}
+
+// Key 当前遍历位置的 Key 数据
+func (bpi *bptreeIterator) Key() []byte {
+	return bpi.currKey
+}
+
+// Value 当前遍历位置的 Value 数据
+func (bpi *bptreeIterator) Value() *data.LogRecordPos {
+	return data.DecodeLogRecordPos(bpi.currValue)
+}
+
+// Close 关闭迭代器，释放相应资源
+func (bpi *bptreeIterator) Close() {
+	_ = bpi.tx.Rollback()
 }

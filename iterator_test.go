@@ -62,7 +62,7 @@ func TestDB_Iterator_Multi_Value(t *testing.T) {
 	assert.Nil(t, err)
 	err = db.Put([]byte("randomE"), utils.RandomValue(10))
 	assert.Nil(t, err)
-
+	
 	// 正向迭代
 	iter1 := db.NewIterator(DefaultIteratorOptions)
 	assert.NotNil(t, iter1)
@@ -74,7 +74,7 @@ func TestDB_Iterator_Multi_Value(t *testing.T) {
 	for iter1.Seek([]byte("randomB")); iter1.Valid(); iter1.Next() {
 		t.Log("Key1 = ", string(iter1.Key()))
 	}
-
+	iter1.Close()
 	// 反向迭代
 	iterOpts1 := DefaultIteratorOptions
 	iterOpts1.Reverse = true
@@ -89,6 +89,7 @@ func TestDB_Iterator_Multi_Value(t *testing.T) {
 	for iter2.Seek([]byte("randomD")); iter2.Valid(); iter2.Next() {
 		t.Log("Key2 = ", string(iter2.Key()))
 	}
+	iter2.Close()
 
 	// 指定了prefix
 	iterOpts2 := DefaultIteratorOptions
