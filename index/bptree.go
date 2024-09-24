@@ -100,9 +100,9 @@ func (bpt *BPlusTree) Size() int {
 
 // Iterator 索引迭代器
 func (bpt *BPlusTree) Iterator(reverse bool) Iterator {
-	if bpt.tree == nil {
-		return nil
-	}
+	//if bpt.tree == nil {
+	//	return nil
+	//}
 	return newBptreeIterator(bpt.tree, reverse)
 }
 
