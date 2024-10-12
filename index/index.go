@@ -9,13 +9,13 @@ import (
 // Index 抽象索引接口，后续如果想要接入其它的数据结构，则直接实现这个接口即可
 type Index interface {
 	// Put 向索引中存储 key 对应的数据位置信息
-	Put(key []byte, pos *data.LogRecordPos) bool
+	Put(key []byte, pos *data.LogRecordPos) *data.LogRecordPos
 
 	// Get 根据 Key 取出对应的索引位置信息
 	Get(key []byte) *data.LogRecordPos
 
 	// Delete 根据 key 删除对应的索引位置信息
-	Delete(key []byte) bool
+	Delete(key []byte) (*data.LogRecordPos, bool)
 
 	// Size 索引中的数据量
 	Size() int
@@ -45,8 +45,10 @@ func NewIndexer(typ IndexType, dirPath string, sync bool) Index {
 	case Btree:
 		return NewBTree()
 	case ART:
+		//	return nil
 		return NewART()
 	case BPTree:
+		//return nil
 		return NewBPlusTree(dirPath, sync)
 	default:
 		panic("unsupported index type")
