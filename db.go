@@ -38,7 +38,7 @@ type DB struct {
 	isInitial       bool                      // 是否是第一次初始化此数据目录
 	fileLock        *flock.Flock              // 文件锁，保证多进程之间的互斥
 	bytesWrite      uint                      // 记录写入多少字节数
-	reclaimSize     int64                     // 表示有多少数据是无效的
+	reclaimableSize int64                     // 表示有多少数据是无效的
 }
 
 type Stat struct {
@@ -109,12 +109,6 @@ func Open(options Options) (*DB, error) {
 			return nil, err
 		}
 
-		// 重置 IO
-		if db.options.MMapAtStartup {
-			if err := db.resetIOType(); err != nil {
-				return nil, err
-			}
-		}
 	}
 
 	// 取出当前事务序列号
@@ -128,6 +122,13 @@ func Open(options Options) (*DB, error) {
 				return nil, err
 			}
 			db.activeFile.WriteOffset = size
+		}
+	}
+
+	// 重置 IO
+	if db.options.MMapAtStartup {
+		if err := db.resetIOType(); err != nil {
+			return nil, err
 		}
 	}
 
@@ -155,7 +156,7 @@ func (db *DB) Put(key, value []byte) error {
 	}
 	// 拿到内存信息之后，更新内存索引
 	if oldPos := db.index.Put(key, pos); oldPos != nil {
-		db.reclaimSize += int64(oldPos.Size)
+		db.reclaimableSize += int64(oldPos.Size)
 	}
 	return nil
 }
@@ -196,7 +197,7 @@ func (db *DB) Delete(key []byte) error {
 	if err != nil {
 		return err
 	}
-	db.reclaimSize += int64(pos.Size)
+	db.reclaimableSize += int64(pos.Size)
 
 	// 从内存索引中删除对应的 key
 
@@ -205,7 +206,7 @@ func (db *DB) Delete(key []byte) error {
 		return ErrIndexUpdateFailed
 	}
 	if oldPos != nil {
-		db.reclaimSize += int64(oldPos.Size)
+		db.reclaimableSize += int64(oldPos.Size)
 	}
 
 	return nil
@@ -285,7 +286,7 @@ func (db *DB) Stat() *Stat {
 	return &Stat{
 		KeyNum:          uint(db.index.Size()),
 		DataFileNum:     dataFiles,
-		ReclaimableSize: db.reclaimSize,
+		ReclaimableSize: db.reclaimableSize,
 		DiskSize:        dirSize, // TODO 等待补全
 	}
 }
@@ -494,13 +495,13 @@ func (db *DB) loadIndexFromDataFiles() error {
 
 		if typ == data.LogRecordDeleted {
 			oldPos, _ = db.index.Delete(key)
-			db.reclaimSize += int64(logRecordPos.Size)
+			db.reclaimableSize += int64(logRecordPos.Size)
 		} else {
 			oldPos = db.index.Put(key, logRecordPos)
 		}
 
 		if oldPos != nil {
-			db.reclaimSize += int64(oldPos.Size)
+			db.reclaimableSize += int64(oldPos.Size)
 		}
 	}
 
