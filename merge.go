@@ -36,7 +36,7 @@ func (db *DB) Merge() error {
 		db.mu.Unlock()
 		return err
 	}
-	if float32(db.reclaimSize)/float32(totalSize) < db.options.DataFileMergeRatio {
+	if float32(db.reclaimableSize)/float32(totalSize) < db.options.DataFileMergeRatio {
 		db.mu.Unlock()
 		return ErrMergeRatioUnreached
 	}

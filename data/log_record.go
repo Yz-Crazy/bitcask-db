@@ -2,6 +2,7 @@ package data
 
 import (
 	"encoding/binary"
+	"fmt"
 	"hash/crc32"
 )
 
@@ -111,14 +112,15 @@ func EncodeLogRecordPos(pos *LogRecordPos) []byte {
 // DecodeLogRecordPos 对位置信息进行接码
 func DecodeLogRecordPos(buf []byte) *LogRecordPos {
 	var index = 0
+	fmt.Println(buf)
 	fileId, n := binary.Varint(buf[index:])
 	index += n
-	offser, _ := binary.Varint(buf[index:])
+	offset, _ := binary.Varint(buf[index:])
 	index += n
 	size, _ := binary.Varint(buf[index:])
 	return &LogRecordPos{
 		Fid:    uint32(fileId),
-		Offset: offser,
+		Offset: offset,
 		Size:   uint32(size),
 	}
 }

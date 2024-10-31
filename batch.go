@@ -133,7 +133,7 @@ func (wb *WriteBatch) Commit() error {
 		}
 
 		if oldPos != nil {
-			wb.db.reclaimSize += int64(oldPos.Size)
+			wb.db.reclaimableSize += int64(oldPos.Size)
 		}
 	}
 
